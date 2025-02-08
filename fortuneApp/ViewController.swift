@@ -10,6 +10,7 @@ import Kingfisher
 
 class ViewController: UIViewController {
     
+    
     var networkManager = NetworkManager()
 
     let searchBar: UISearchBar = {
@@ -44,6 +45,7 @@ class ViewController: UIViewController {
             button.backgroundColor = UIColor.systemRed
             button.titleLabel?.font = UIFont.systemFont(ofSize: 32)
             button.layer.cornerRadius = 15
+             button.isHidden = true
             return button
         }()
         
@@ -53,6 +55,7 @@ class ViewController: UIViewController {
             button.backgroundColor = UIColor.systemGreen
             button.titleLabel?.font = UIFont.systemFont(ofSize: 32)
             button.layer.cornerRadius = 15
+            button.isHidden = true
             return button
         }()
         
@@ -66,6 +69,8 @@ class ViewController: UIViewController {
             
             predictionButton.addTarget(self, action: #selector(getPrediction), for: .touchUpInside)
             thumbsDownButton.addTarget(self, action: #selector(getPrediction), for: .touchUpInside)
+            thumbsUpButton.addTarget(self, action: #selector(likePressed), for: .touchUpInside)
+
         }
         
       private func setupUI() {
@@ -115,13 +120,27 @@ class ViewController: UIViewController {
         }
 
     @objc private func getPrediction() {
-//        if searchBar.text != ""  {
+        if searchBar.text != ""  {
             networkManager.performRequest()
-//        }
+        }
+        thumbsDownButton.isHidden = false
+        thumbsUpButton.isHidden = false
     }
     
     @objc func likePressed() {
-    }
+        
+
+        let alert = UIAlertController(title: nil, message: "Fate accepted!\nAsk again", preferredStyle: .alert)
+           let okAction = UIAlertAction(title: "OK", style: .default, handler: nil)
+           alert.addAction(okAction)
+           
+        self.present(alert, animated: true)
+        searchBar.text = ""
+        predictionImageView.image = UIImage(named: "cover")
+        thumbsDownButton.isHidden = true
+        thumbsUpButton.isHidden = true
+          }
+    
 
     private func rotateImageView() {
         UIView.animate(
@@ -130,37 +149,32 @@ class ViewController: UIViewController {
                 options: [],
                 animations: {
                     self.predictionImageView.layer.transform = CATransform3DMakeRotation(.pi, 0, 0.1, 0)
-                    self.predictionImageView.alpha = 0.3
-                }, completion: { _ in
-  
-                    let url = URL(string: "https://i.imgflip.com/23ls.jpg")
-                    self.predictionImageView.kf.setImage(with: url) { _ in
-                         UIView.animate(withDuration: 1.0) {
-                            
-                            self.predictionImageView.alpha = 1
-                        }
+//                    self.predictionImageView.alpha = 0.3
+                })
                     }
                  
-                })
-    }
+               
 }
 
 extension ViewController: UISearchBarDelegate {
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
         searchBar.text = ""
         searchBar.resignFirstResponder()
+        predictionImageView.image = UIImage(named: "cover")
+
      }
 }
 
 extension ViewController: NetworkServiceDelegate {
+    
     func didUpdateData(meme: MemModel) {
         print(meme.urlMem)
         
-//        DispatchQueue.main.async {
-//            let url = URL(string: meme.urlMem)
-//            self.predictionImageView.kf.setImage(with: url)  { _ in
-                 self.rotateImageView()
-            }
+        DispatchQueue.main.async {
+            let url = URL(string: meme.urlMem)
+            self.predictionImageView.kf.setImage(with: url)
+        }
+    }
         
     
     func didFailWithError(error: any Error) {
